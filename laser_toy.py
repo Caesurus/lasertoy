@@ -10,7 +10,7 @@ DEFAULT_MIN_MOVEMENT = 10
 DEFAULT_X_MIN_POSITION = 20
 DEFAULT_X_MAX_POSITION = 100
 DEFAULT_Y_MIN_POSITION = 55
-DEFAULT_Y_MAX_POSITION = 130
+DEFAULT_Y_MAX_POSITION = 120
 
 # define which GPIO pins to use for the servos and laser
 GPIO_X_SERVO = 4
@@ -123,6 +123,7 @@ class Laser:
     def generate_new_y(self):
         if self.last_y:
             self.last_y = False
+            print(f'setting to max: {self.y_max}')
             ret = self.y_max  # random.randint(int(self.y_max/2), int(self.y_max))
         else:
             self.last_y = True
@@ -190,7 +191,6 @@ if __name__ == '__main__':
 
     laser.calibrate_laser()
     try:
-
         if args.xaxis and args.yaxis:
             laser.set_position(int(args.xaxis), int(args.yaxis))
             time.sleep(20)
