@@ -48,9 +48,8 @@ class GPIOTestMock:
         self.servos = {}
         self.turtle = Turtle()
         self.turtle.hideturtle()
+        self.turtle.speed(0)
         self.turtle.up()
-        # self.turtle.down()
-        pass
 
     def setmode(self, *args, **kwargs):
         pass
@@ -83,7 +82,9 @@ class LaserTestCase(unittest.TestCase):
         # screen.setup(width=1024, height=1024)
         laser = Laser(rapid_movement=False, min_movement=20)
         laser.calibrate_laser()
+        # Don't wait for anything, don't sleep, go as fast as you can.
         with patch('time.sleep') as mock_sleep:
+            laser._test_range()
             for i in range(0, 200):
                 laser.fire()
         time.sleep(10)

@@ -133,10 +133,8 @@ class Laser:
         # randomly pick new position, leaving a buffer +- the min values for adjustment later
         while True:
             new_position = random.randint(min_val, max_val)
-            # print(f'new_position: {new_position}, old_position = {old_position}, abs movement = {abs(new_position - old_position)}, min_movement = {self.min_movement}')
             if abs(new_position - old_position) > self.min_movement:
                 break
-        # print("New position: {0}".format(new_position))
         return new_position
 
     def __get_position_incrementer(self, position, desired_position):
@@ -154,7 +152,6 @@ class Laser:
     @staticmethod
     def __get_movement_delay():
         return random.uniform(2, 5)
-        # return 3
 
     @staticmethod
     def __get_movement_time():
