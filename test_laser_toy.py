@@ -30,10 +30,10 @@ class Servo:
         if laser_toy.GPIO_X_SERVO == self.number:
             x_loc = self.position  # - laser_toy.DEFAULT_X_MIN_POSITION
             self.turtle.setx(x_loc * MULTIPLICATION_FACTOR)
+            self.turtle.dot(5)
         elif laser_toy.GPIO_Y_SERVO == self.number:
             y_loc = self.position  # - laser_toy.DEFAULT_Y_MIN_POSITION
             self.turtle.sety(y_loc * MULTIPLICATION_FACTOR)
-            self.turtle.dot(5)
 
     def ChangeDutyCycle(self, *args, **kwargs):
         self.position = args[0]
@@ -66,11 +66,14 @@ class GPIOTestMock:
         return self.servos[servo_num]
 
     def output(self, *args, **kwargs):
+        """
         if laser_toy.GPIO_LASER == args[0]:
             if args[1]:
                 self.turtle.down()
             else:
                 self.turtle.up()
+        """
+        pass
 
 
 laser_toy.GPIO = GPIOTestMock()
@@ -80,7 +83,7 @@ class LaserTestCase(unittest.TestCase):
 
     def test_instance(self):
         # screen.setup(width=1024, height=1024)
-        laser = Laser(rapid_movement=False, min_movement=20)
+        laser = Laser(rapid_movement=True, min_movement=40)
         laser.calibrate_laser()
         # Don't wait for anything, don't sleep, go as fast as you can.
         with patch('time.sleep') as mock_sleep:

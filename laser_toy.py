@@ -10,12 +10,14 @@ DEFAULT_MIN_MOVEMENT = 10
 DEFAULT_X_MIN_POSITION = 20
 DEFAULT_X_MAX_POSITION = 100
 DEFAULT_Y_MIN_POSITION = 55
-DEFAULT_Y_MAX_POSITION = 120
+DEFAULT_Y_MAX_POSITION = 110
 
 # define which GPIO pins to use for the servos and laser
 GPIO_X_SERVO = 4
 GPIO_Y_SERVO = 17
 GPIO_LASER = 27
+
+LOCATIONS = [(0, 110), (100, 110), (20, 50), (0, 70), (100, 70), (50, 70), (50, 60), (10, 60), (15, 50)]
 
 
 class Laser:
@@ -24,12 +26,14 @@ class Laser:
                  x_max: int = DEFAULT_X_MAX_POSITION,
                  y_min: int = DEFAULT_Y_MIN_POSITION,
                  y_max: int = DEFAULT_Y_MAX_POSITION,
-                 rapid_movement: bool = False):
+                 rapid_movement: bool = False,
+                 random_movement: bool = False):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(GPIO_X_SERVO, GPIO.OUT)
         GPIO.setup(GPIO_Y_SERVO, GPIO.OUT)
         GPIO.setup(GPIO_LASER, GPIO.OUT)
 
+        self.random_movement = random_movement
         self.x_servo = GPIO.PWM(GPIO_X_SERVO, 50)
         self.y_servo = GPIO.PWM(GPIO_Y_SERVO, 50)
 
@@ -42,10 +46,12 @@ class Laser:
 
         self.x_position = self.x_min + (self.x_max - self.x_min) / 2
         self.y_position = self.y_min + (self.y_max - self.y_min) / 2
+
         self.last_y = self.y_min
 
         self.movement_time = self.__get_movement_time()
         self.rapid_movement = rapid_movement
+        self.curr_idx = 0
 
     @staticmethod
     def laser_on():
@@ -76,25 +82,34 @@ class Laser:
         self.movement_time = self.__get_movement_time()
         print("Movement time: {0}".format(self.movement_time))
         print("Current position: X: {0}, Y: {1}".format(self.x_position, self.y_position))
-        if self.rapid_movement:
-            self.x_position = self.generate_new_x()
-            self.y_position = self.generate_new_y()
-            self.__set_servo_position(self.x_servo, self.x_position)
-            self.__set_servo_position(self.y_servo, self.y_position)
+        if self.random_movement:
+            new_y = self.generate_new_y()
+            new_x = self.generate_new_x()
         else:
-            # how many steps (how long) should we take to get from old to new position
-            x_incrementer = self.__get_position_incrementer(self.x_position, self.generate_new_x())
-            y_incrementer = self.__get_position_incrementer(self.y_position, self.generate_new_y())
-            print('Tokyo Drift engaged...')
-            for index in range(self.movement_time + 1):
-                print("For, X Position: {0}, Y Position: {1}".format(self.x_position, self.y_position))
-                self.x_position += x_incrementer
-                self.y_position += y_incrementer
+            new_x, new_y = LOCATIONS[self.curr_idx]
+            self.curr_idx += 1
+            if self.curr_idx >= len(LOCATIONS):
+                self.curr_idx = 0
 
-                self.__set_servo_position(self.x_servo, self.x_position)
+        if not self.rapid_movement:
+            # how many steps (how long) should we take to get from old to new position
+            y_incrementer = self.__get_position_incrementer(self.y_position, new_y)
+            x_incrementer = self.__get_position_incrementer(self.x_position, new_x)
+            print('Tokyo Drift engaged...')
+            for index in range(self.movement_time):
+                print("For, X Position: {0}, Y Position: {1}".format(self.x_position, self.y_position))
+                self.y_position += y_incrementer
+                self.x_position += x_incrementer
+
                 self.__set_servo_position(self.y_servo, self.y_position)
+                self.__set_servo_position(self.x_servo, self.x_position)
 
                 time.sleep(0.1)
+
+        self.y_position = new_y
+        self.x_position = new_x
+        self.__set_servo_position(self.y_servo, self.y_position)
+        self.__set_servo_position(self.x_servo, self.x_position)
 
         # leave the laser still so the cat has a chance to catch up
         time.sleep(self.__get_movement_delay())
@@ -118,16 +133,23 @@ class Laser:
         return (angle / 18.0) + 2.5
 
     def generate_new_x(self):
-        return self.__generate_new_coordinate(self.x_position, self.x_min, self.x_max)
+        step = (self.y_max - self.y_min) / 10
+        bucket = int((self.y_position - self.y_min) / step)
+        print(f'step: {step}, bucket: {bucket}')
+        if bucket < 1:
+            return self.__generate_new_coordinate(self.x_position, self.x_min, self.x_max)
+        else:
+            x = (self.x_max - self.x_min) / 2
+            print(f'bucket 0: {x}')
+            return x
 
     def generate_new_y(self):
         if self.last_y:
             self.last_y = False
-            print(f'setting to max: {self.y_max}')
-            ret = self.y_max  # random.randint(int(self.y_max/2), int(self.y_max))
+            ret = self.y_max
         else:
             self.last_y = True
-            ret = self.y_min  # +(self.y_max/10)#random.randint(int(self.y_min), )
+            ret = self.y_min
         return ret
 
     def __generate_new_coordinate(self, old_position, min_val, max_val):
@@ -187,7 +209,7 @@ if __name__ == '__main__':
     parser.add_argument('-x', '--xaxis')
     parser.add_argument('-y', '--yaxis')
     args = parser.parse_args()
-    laser = Laser(min_movement=10, rapid_movement=True)
+    laser = Laser(min_movement=10, rapid_movement=False)
 
     laser.calibrate_laser()
     try:
