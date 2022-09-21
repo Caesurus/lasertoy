@@ -17,7 +17,7 @@ GPIO_X_SERVO = 4
 GPIO_Y_SERVO = 17
 GPIO_LASER = 27
 
-LOCATIONS = [(0, 110), (100, 110), (20, 50), (0, 70), (100, 70), (50, 70), (50, 60), (10, 60), (15, 50)]
+LOCATIONS = [(0, 110), (20, 50), (100, 110), (0, 70),  (15, 50), (100, 70), (50, 60), (50, 70), (10, 60)]
 
 
 class Laser:
@@ -174,7 +174,7 @@ class Laser:
 
     @staticmethod
     def __get_movement_delay():
-        return random.uniform(2, 5)
+        return random.uniform(0, 1)
 
     @staticmethod
     def __get_movement_time():
